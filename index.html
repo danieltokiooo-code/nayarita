@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Para Nayara</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    :root {
+      --bg-deep: #05070e;
+      --gold-soft: #f5d799;
+      --gold-bright: #fff3d6;
+      --amber-glow: #e89b4c;
+      --glass-bg: rgba(12, 16, 30, 0.72);
+      --glass-border: rgba(245, 215, 153, 0.22);
+      --text-main: #f4efe6;
+      --text-muted: #b0b8cc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-deep);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text-main);
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
+
+    /* Pantalla de entrada */
+    #intro-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: radial-gradient(circle at 50% 45%, #13192e 0%, #060913 65%, #020308 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      transition: opacity 1.5s cubic-bezier(0.22, 1, 0.36, 1), visibility 1.5s;
+    }
+
+    #intro-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .intro-star-icon {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1.5rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .intro-star-core {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--gold-bright);
+      box-shadow: 0 0 25px 8px rgba(245, 215, 153, 0.85), 0 0 60px 20px rgba(232, 155, 76, 0.45);
+      animation: pulseStar 3.2s infinite ease-in-out;
+    }
+
+    @keyframes pulseStar {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.35); opacity: 1; }
+    }
+
+    .intro-subtitle {
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold-soft);
+      margin-bottom: 0.6rem;
+      opacity: 0.9;
+    }
+
+    .intro-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-weight: 300;
+      letter-spacing: 0.03em;
+      color: var(--gold-bright);
+      margin-bottom: 2.4rem;
+    }
+
+    .enter-btn {
+      background: rgba(245, 215, 153, 0.1);
+      border: 1px solid rgba(245, 215, 153, 0.4);
+      color: var(--gold-bright);
+      padding: 0.9rem 2.4rem;
+      border-radius: 999px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.88rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.35s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .enter-btn:hover {
+      background: rgba(245, 215, 153, 0.22);
+      border-color: var(--gold-bright);
+      transform: translateY(-2px);
+    }
+
+    /* HUD Superior */
+    #hud-top {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: 1.25rem 1.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1.2s ease 0.5s;
+    }
+
+    #hud-top.visible {
+      opacity: 1;
+    }
+
+    .brand-block {
+      pointer-events: auto;
+    }
+
+    .brand-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      color: var(--gold-bright);
+      letter-spacing: 0.04em;
+    }
+
+    .hud-actions {
+      display: flex;
+      gap: 0.65rem;
+      pointer-events: auto;
+    }
+
+    .icon-pill {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      padding: 0.5rem 0.95rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: all 0.25s ease;
+    }
+
+    .icon-pill:hover, .icon-pill.active {
+      border-color: var(--gold-soft);
+      color: var(--gold-bright);
+      background: rgba(245, 215, 153, 0.14);
+    }
+
+    .sound-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold-soft);
+    }
+
+    .sound-dot.playing {
+      background: #7be39c;
+      box-shadow: 0 0 8px #7be39c;
+    }
+
+    /* Etiquetas flotantes 3D */
+    #labels-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .star-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      cursor: pointer;
+      text-align: center;
+      transition: opacity 0.3s ease, transform 0.25s ease;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(8, 11, 22, 0.55);
+      border: 1px solid rgba(245, 215, 153, 0.2);
+      backdrop-filter: blur(6px);
+      white-space: nowrap;
+    }
+
+    .star-label:hover {
+      transform: translate(-50%, -55%) scale(1.06);
+      border-color: var(--gold-soft);
+      background: rgba(20, 26, 48, 0.8);
+    }
+
+    .star-label .lbl-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      color: var(--gold-bright);
+      letter-spacing: 0.04em;
+    }
+
+    .star-label.primary-star {
+      border-color: rgba(245, 215, 153, 0.45);
+      background: rgba(32, 24, 18, 0.72);
+      padding: 0.4rem 0.95rem;
+    }
+
+    .star-label.primary-star .lbl-name {
+      font-size: 1.15rem;
+      color: #fff6e0;
+    }
+
+    /* Dock inferior */
+    #bottom-dock {
+      position: fixed;
+      bottom: 1.35rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.65rem;
+      width: 94%;
+      max-width: 680px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1.2s ease 0.7s;
+    }
+
+    #bottom-dock.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .star-pills-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.4rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      padding: 0.4rem;
+      border-radius: 999px;
+      backdrop-filter: blur(14px);
+    }
+
+    .nav-pill {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 0.4rem 0.95rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .nav-pill:hover, .nav-pill.active {
+      color: var(--gold-bright);
+      background: rgba(245, 215, 153, 0.14);
+      border-color: rgba(245, 215, 153, 0.32);
+    }
+
+    .dock-main-actions {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .action-btn {
+      background: linear-gradient(135deg, rgba(245, 215, 153, 0.18), rgba(232, 155, 76, 0.12));
+      border: 1px solid rgba(245, 215, 153, 0.38);
+      color: var(--gold-bright);
+      padding: 0.62rem 1.3rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      backdrop-filter: blur(14px);
+      transition: all 0.28s ease;
+    }
+
+    .action-btn:hover {
+      background: linear-gradient(135deg, rgba(245, 215, 153, 0.28), rgba(232, 155, 76, 0.22));
+      border-color: var(--gold-bright);
+      transform: translateY(-2px);
+    }
+
+    /* Modales */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(3, 5, 12, 0.68);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .glass-card {
+      width: 100%;
+      max-width: 520px;
+      max-height: 86vh;
+      overflow-y: auto;
+      background: linear-gradient(165deg, rgba(17, 23, 42, 0.94) 0%, rgba(9, 12, 24, 0.97) 100%);
+      border: 1px solid rgba(245, 215, 153, 0.32);
+      border-radius: 22px;
+      padding: 2rem 1.85rem;
+      position: relative;
+      box-shadow: 0 25px 75px rgba(0, 0, 0, 0.75);
+      transform: translateY(14px) scale(0.98);
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .glass-card.wide-card {
+      max-width: 580px;
+    }
+
+    .modal-backdrop.open .glass-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 1.15rem;
+      right: 1.15rem;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid rgba(245, 215, 153, 0.25);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+      color: var(--gold-bright);
+      border-color: var(--gold-soft);
+    }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.95rem;
+      font-weight: 400;
+      color: var(--gold-bright);
+      margin-bottom: 1.1rem;
+      line-height: 1.2;
+    }
+
+    /* Foto dentro de la carta */
+    .card-photo-wrap {
+      width: 100%;
+      margin-bottom: 1.25rem;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(245, 215, 153, 0.28);
+      background: rgba(0, 0, 0, 0.25);
+      display: none;
+    }
+
+    .card-photo {
+      width: 100%;
+      max-height: 300px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-body {
+      font-size: 0.96rem;
+      line-height: 1.8;
+      color: var(--text-main);
+      font-weight: 300;
+      margin-bottom: 1.4rem;
+      white-space: pre-line;
+    }
+
+    .card-signature {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.2rem;
+      color: var(--gold-soft);
+      text-align: right;
+    }
+
+    .card-voice-shortcut {
+      margin-top: 1.3rem;
+      padding-top: 1.1rem;
+      border-top: 1px solid rgba(245, 215, 153, 0.14);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* Cápsula de Voz */
+    .voice-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin: 0.5rem 0 1.25rem;
+    }
+
+    .voice-tab {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(245, 215, 153, 0.2);
+      border-radius: 12px;
+      padding: 0.65rem 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.25s ease;
+    }
+
+    .voice-tab.active {
+      background: rgba(245, 215, 153, 0.15);
+      border-color: var(--gold-soft);
+      color: var(--gold-bright);
+    }
+
+    .player-box {
+      background: rgba(5, 8, 17, 0.72);
+      border: 1px solid rgba(245, 215, 153, 0.22);
+      border-radius: 16px;
+      padding: 1.2rem;
+    }
+
+    .player-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.95rem;
+    }
+
+    .play-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, var(--gold-soft), var(--amber-glow));
+      color: #090c15;
+      font-size: 1.05rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 22px rgba(245, 215, 153, 0.4);
+      transition: transform 0.2s ease;
+    }
+
+    .play-circle:hover {
+      transform: scale(1.06);
+    }
+
+    .track-meta {
+      flex: 1;
+    }
+
+    .track-title {
+      font-weight: 500;
+      font-size: 0.98rem;
+      color: var(--gold-bright);
+    }
+
+    #waveform-canvas {
+      width: 100%;
+      height: 48px;
+      display: block;
+      margin: 0.35rem 0 0.65rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-size: 0.73rem;
+      color: var(--text-muted);
+    }
+
+    .progress-bar-bg {
+      flex: 1;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-soft), var(--amber-glow));
+      border-radius: 999px;
+      transition: width 0.12s linear;
+    }
+
+    /* Tickets de Estrellas Fugaces */
+    .tickets-sub {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-top: -0.6rem;
+      margin-bottom: 1.35rem;
+      font-weight: 300;
+    }
+
+    .tickets-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .ticket-item {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: linear-gradient(135deg, rgba(245, 215, 153, 0.1) 0%, rgba(15, 22, 42, 0.78) 100%);
+      border: 1px solid rgba(245, 215, 153, 0.3);
+      border-radius: 16px;
+      padding: 1.05rem 1.2rem;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .ticket-item:hover {
+      border-color: var(--gold-soft);
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, rgba(245, 215, 153, 0.16) 0%, rgba(19, 28, 52, 0.88) 100%);
+    }
+
+    .ticket-item::before,
+    .ticket-item::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 14px;
+      height: 14px;
+      background: #0b0f1e;
+      border: 1px solid rgba(245, 215, 153, 0.3);
+      border-radius: 50%;
+      transform: translateY(-50%);
+    }
+
+    .ticket-item::before { left: -8px; }
+    .ticket-item::after { right: -8px; }
+
+    .ticket-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.9rem;
+      flex: 1;
+      padding-left: 0.2rem;
+    }
+
+    .ticket-icon {
+      font-size: 1.45rem;
+      line-height: 1;
+      margin-top: 0.1rem;
+      filter: drop-shadow(0 0 8px rgba(245, 215, 153, 0.4));
+    }
+
+    .ticket-info { flex: 1; }
+
+    .ticket-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gold-bright);
+      letter-spacing: 0.02em;
+      margin-bottom: 0.2rem;
+    }
+
+    .ticket-desc {
+      font-size: 0.83rem;
+      line-height: 1.45;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    .ticket-right {
+      border-left: 1px dashed rgba(245, 215, 153, 0.25);
+      padding-left: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ticket-btn {
+      background: rgba(245, 215, 153, 0.14);
+      border: 1px solid rgba(245, 215, 153, 0.42);
+      color: var(--gold-bright);
+      padding: 0.48rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .ticket-btn:hover {
+      background: var(--gold-soft);
+      color: #080b14;
+    }
+
+    .ticket-item.used .ticket-btn {
+      background: rgba(123, 227, 156, 0.16);
+      border-color: rgba(123, 227, 156, 0.5);
+      color: #98f5b5;
+    }
+
+    #wish-toast {
+      position: fixed;
+      top: 4.9rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(-12px);
+      z-index: 60;
+      background: rgba(12, 18, 36, 0.92);
+      border: 1px solid var(--gold-soft);
+      color: var(--gold-bright);
+      padding: 0.65rem 1.35rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      letter-spacing: 0.03em;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.35s ease;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      white-space: nowrap;
+    }
+
+    #wish-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Panda */
+    #panda-btn {
+      position: fixed;
+      right: 0.9rem;
+      bottom: 9.2rem;
+      z-index: 12;
+      width: 96px;
+      height: 96px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(40px) scale(0.5);
+      pointer-events: none;
+      transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #panda-btn.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    #panda-btn svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55));
+      animation: pandaBob 3s ease-in-out infinite;
+    }
+
+    @keyframes pandaBob {
+      0%, 100% { transform: translateY(0) rotate(-2deg); }
+      50% { transform: translateY(-6px) rotate(2deg); }
+    }
+
+    .panda-hint {
+      position: absolute;
+      top: -4px;
+      left: -10px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 0.15rem 0.55rem;
+      font-size: 0.85rem;
+      animation: pandaBob 2.4s ease-in-out infinite;
+    }
+
+    .panda-card-icon {
+      width: 84px;
+      height: 84px;
+      margin: 0 auto 0.6rem;
+      display: block;
+    }
+
+    @media (max-width: 600px) {
+      #hud-top { padding: 0.95rem 1.1rem; }
+      .glass-card { padding: 1.5rem 1.25rem; }
+      .card-title { font-size: 1.65rem; }
+      .ticket-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+      }
+      .ticket-right {
+        border-left: none;
+        border-top: 1px dashed rgba(245, 215, 153, 0.22);
+        padding-left: 0;
+        padding-top: 0.7rem;
+        align-items: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pantalla Inicial -->
+  <section id="intro-screen">
+    <div class="intro-star-icon">
+      <div class="intro-star-core"></div>
+    </div>
+    <p class="intro-subtitle">Te queremos mucho</p>
+    <h1 class="intro-title">Para Nayara</h1>
+    <button class="enter-btn" id="enter-btn">Entrar</button>
+  </section>
+
+  <!-- Escena 3D -->
+  <div id="canvas-container"></div>
+  <div id="labels-layer"></div>
+
+  <!-- Barra Superior -->
+  <header id="hud-top">
+    <div class="brand-block">
+      <div class="brand-title">Nayara</div>
+    </div>
+    <div class="hud-actions">
+      <button class="icon-pill" id="ambient-btn">
+        <span class="sound-dot" id="ambient-dot"></span>
+        <span id="ambient-label">Música</span>
+      </button>
+      <button class="icon-pill" id="reset-cam-btn">Centrar</button>
+    </div>
+  </header>
+
+  <!-- Controles Inferiores -->
+  <nav id="bottom-dock">
+    <div class="star-pills-bar">
+      <button class="nav-pill" data-star="central">✦</button>
+      <button class="nav-pill" data-star="daniel">Daniel</button>
+      <button class="nav-pill" data-star="moises">Moisés</button>
+      <button class="nav-pill" data-star="alvaro">Álvaro</button>
+    </div>
+    <div class="dock-main-actions">
+      <button class="action-btn" id="open-voice-btn">
+        <span>🎙️</span>
+        <span>Audios</span>
+      </button>
+      <button class="action-btn" id="open-tickets-btn">
+        <span>🌠</span>
+        <span>Estrellas fugaces</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Modal de Carta -->
+  <div class="modal-backdrop" id="letter-modal">
+    <div class="glass-card">
+      <button class="close-btn" data-close="letter-modal">✕</button>
+      <h2 class="card-title" id="modal-title"></h2>
+
+      <!-- Contenedor de la foto -->
+      <div class="card-photo-wrap" id="modal-photo-wrap">
+        <img class="card-photo" id="modal-photo" src="" alt="" />
+      </div>
+
+      <div class="card-body" id="modal-body"></div>
+      <div class="card-signature" id="modal-sign"></div>
+      <div class="card-voice-shortcut" id="modal-voice-shortcut" style="display:none;">
+        <button class="action-btn" id="modal-listen-btn">
+          <span>🎙️</span>
+          <span id="modal-listen-label">Escuchar audio</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Audios -->
+  <div class="modal-backdrop" id="voice-modal">
+    <div class="glass-card">
+      <button class="close-btn" data-close="voice-modal">✕</button>
+      <h2 class="card-title">Audios</h2>
+
+      <div class="voice-tabs">
+        <button class="voice-tab active" data-track="0">Daniel</button>
+        <button class="voice-tab" data-track="1">Moisés</button>
+        <button class="voice-tab" data-track="2">Álvaro</button>
+      </div>
+
+      <div class="player-box">
+        <div class="player-header">
+          <button class="play-circle" id="voice-play-btn">▶</button>
+          <div class="track-meta">
+            <div class="track-title" id="track-title">Daniel</div>
+          </div>
+        </div>
+
+        <canvas id="waveform-canvas" width="440" height="48"></canvas>
+
+        <div class="progress-wrap">
+          <span id="time-current">0:00</span>
+          <div class="progress-bar-bg" id="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+          </div>
+          <span id="time-total">0:00</span>
+        </div>
+      </div>
+
+      <audio id="voice-audio-el" preload="auto"></audio>
+    </div>
+  </div>
+
+  <!-- Modal de Tickets (Estrellas fugaces) -->
+  <div class="modal-backdrop" id="tickets-modal">
+    <div class="glass-card wide-card">
+      <button class="close-btn" data-close="tickets-modal">✕</button>
+      <h2 class="card-title">Estrellas fugaces</h2>
+      <p class="tickets-sub">Vales para usar con nosotros cuando tú quieras (sin caducidad).</p>
+      <div class="tickets-grid" id="tickets-list"></div>
+    </div>
+  </div>
+
+  <!-- Panda -->
+  <button id="panda-btn" aria-label="Panda">
+    <span class="panda-hint">👋</span>
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- cuerpo -->
+      <ellipse cx="50" cy="76" rx="26" ry="20" fill="#fff"/>
+      <ellipse cx="28" cy="80" rx="9" ry="12" fill="#2a2a33"/>
+      <ellipse cx="72" cy="80" rx="9" ry="12" fill="#2a2a33"/>
+      <ellipse cx="50" cy="80" rx="13" ry="11" fill="#f4f4f4"/>
+      <!-- orejas -->
+      <circle cx="24" cy="26" r="11" fill="#2a2a33"/>
+      <circle cx="76" cy="26" r="11" fill="#2a2a33"/>
+      <!-- cabeza -->
+      <ellipse cx="50" cy="46" rx="33" ry="29" fill="#fff"/>
+      <!-- manchas ojos -->
+      <ellipse cx="34" cy="45" rx="9" ry="11" fill="#2a2a33" transform="rotate(25 34 45)"/>
+      <ellipse cx="66" cy="45" rx="9" ry="11" fill="#2a2a33" transform="rotate(-25 66 45)"/>
+      <!-- ojos -->
+      <circle cx="35" cy="44" r="4.2" fill="#fff"/>
+      <circle cx="65" cy="44" r="4.2" fill="#fff"/>
+      <circle cx="36" cy="44" r="2.2" fill="#111"/>
+      <circle cx="64" cy="44" r="2.2" fill="#111"/>
+      <circle cx="37" cy="43" r="0.9" fill="#fff"/>
+      <circle cx="65" cy="43" r="0.9" fill="#fff"/>
+      <!-- mofletes -->
+      <ellipse cx="26" cy="58" rx="6" ry="4" fill="#ffb7c0" opacity="0.7"/>
+      <ellipse cx="74" cy="58" rx="6" ry="4" fill="#ffb7c0" opacity="0.7"/>
+      <!-- nariz y boca -->
+      <ellipse cx="50" cy="56" rx="4.5" ry="3" fill="#2a2a33"/>
+      <path d="M44 62 Q50 67 56 62" stroke="#2a2a33" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    </svg>
+  </button>
+
+  <!-- Modal del panda -->
+  <div class="modal-backdrop" id="panda-modal">
+    <div class="glass-card">
+      <button class="close-btn" data-close="panda-modal">✕</button>
+      <svg class="panda-card-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="26" r="11" fill="#2a2a33"/>
+        <circle cx="76" cy="26" r="11" fill="#2a2a33"/>
+        <ellipse cx="50" cy="50" rx="36" ry="32" fill="#fff"/>
+        <ellipse cx="34" cy="48" rx="9" ry="11" fill="#2a2a33" transform="rotate(25 34 48)"/>
+        <ellipse cx="66" cy="48" rx="9" ry="11" fill="#2a2a33" transform="rotate(-25 66 48)"/>
+        <circle cx="35" cy="47" r="4.2" fill="#fff"/>
+        <circle cx="65" cy="47" r="4.2" fill="#fff"/>
+        <circle cx="36" cy="47" r="2.2" fill="#111"/>
+        <circle cx="64" cy="47" r="2.2" fill="#111"/>
+        <ellipse cx="26" cy="61" rx="6" ry="4" fill="#ffb7c0" opacity="0.7"/>
+        <ellipse cx="74" cy="61" rx="6" ry="4" fill="#ffb7c0" opacity="0.7"/>
+        <ellipse cx="50" cy="59" rx="4.5" ry="3" fill="#2a2a33"/>
+        <path d="M44 65 Q50 70 56 65" stroke="#2a2a33" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      </svg>
+      <h2 class="card-title" id="panda-title" style="text-align:center;"></h2>
+      <div class="card-body" id="panda-body"></div>
+      <div class="card-signature" id="panda-sign"></div>
+    </div>
+  </div>
+
+  <div id="wish-toast"></div>
+  <audio id="bg-music-el" src="musica.mp3" loop preload="auto"></audio>
+
+  <script>
+    // ============================================================================
+    // 1. ESPACIO PARA VUESTROS TEXTOS, FOTOS, AUDIOS Y TICKETS
+    // ============================================================================
+    const STAR_DATA = [
+      {
+        id: 'central',
+        label: '✦',
+        position: [0, 3.2, 0],
+        color: 0xfff0c4,
+        scale: 2.35,
+        isPrimary: true,
+        title: 'Para Nayara',
+        photo: null,
+        body: `Hola Nayarita, hoy sabemos que va a ser un día más complicado, distinto y en el que vas a estar algo más indiferente, pero no por ello queremos que sientas que estás sola, o que simplemente te sientas triste sin ningún apoyo. Hemos pensado Álvaro y yo hacerte esta web en la que también ha aportado Moisés, fuera de vuestros problemas y sin ánimo de lucrarse con nada. Todos te tenemos un aprecio inmenso que cada uno lo tiene de una forma distinta hacia ti y que por ello va más allá de los problemas que surjan alguna vez entre nosotros.
+
+Te escribo esto yo, Daniel, una de las personas que con seguridad dice que te quiere más en este mundo y que se siente muy querido por tu parte, y sería el mayor error de mi vida dejar que este día sientas que no estoy aquí para ti.`,
+        sign: 'Te quiero mi Nay, te queremos.',
+        voiceIdx: null
+      },
+      {
+        id: 'daniel',
+        label: 'Daniel',
+        position: [0, -2.8, 5.8],
+        color: 0xaed4ff,
+        scale: 1.45,
+        isPrimary: false,
+        title: 'Daniel',
+        photo: 'foto_daniel.jpg',
+        body: `Hola Nayara, no suelo escribirte cosas de forma más seria porque sé que te animas más cuando soy yo con mis bromas y mi forma de ser tan exótica, pero bueno eso es lo de menos ahora. Ha pasado un año ya de un suceso que obviamente ha marcado un antes y un después en ti, que me duele muchísimo no haber podido estar presente cuando ocurrió, no me habría pensado dos veces plantarme ahí para que no estuvieras sola en ese momento. Hemos hablado varias veces sobre el tema, ya sea estando en mejores o peores situaciones, a día de hoy como te digo siempre estoy más que seguro de que a tu madre le encantaría ver la pedazo de mujer en la que te estás convirtiendo, la forma en la que te esfuerzas en mejorar en ti misma en todos los ámbitos y lo bien que lo estás haciendo. Orgulloso es poco de ver cómo ha pasado el tiempo y aunque el mundo no vaya en armonía contigo ni siquiera has perdido un poco de esa esencia que te hace ser tan única. Estoy tan feliz de poder tenerte aquí conmigo y poder apoyarte siempre que lo necesites. Nunca será un esfuerzo, porque lo eres todo para mí Nayara. Quiero que te quede clarísimo que no estás sola, que no esté ahí ahora mismo no significa que no me tengas ¿vale?
+
+Hoy no tienes que hacerte la fuerte si no te apetece, ni fingir nada con nosotros; si quieres llorar, desahogarte o estar en silencio, aquí me vas a tener, y si prefieres que diga cuatro tonterías de las mías para sacarte una sonrisa y despejarte la cabeza, pues también. Mira hacia arriba tranquila, que ella sigue cuidándote en cada paso que das, y aquí abajo me tienes a mí para no soltarte la mano nunca. Te quiero muchísimo.`,
+        sign: 'Daniel',
+        voiceIdx: 0
+      },
+      {
+        id: 'moises',
+        label: 'Moisés',
+        position: [-7.2, 0.6, 4.2],
+        color: 0xffc4b8,
+        scale: 1.4,
+        isPrimary: false,
+        title: 'Moisés',
+        photo: 'foto_moises.jpg',
+        body: `Hola cosita, no sé muy bien cómo empezar, primero que todo decirte lo orgulloso que estoy de que seas una chica tan fuerte y valiente, ha pasado 1 año desde la pérdida de tu mamá, lo cual hace que el día de hoy sea tan importante como difícil. Soy consciente de que unas palabras no quitan el dolor, pero pueden ayudarte a sobrellevarlo.
+
+Desde el día que te conocí has tenido solo recuerdos preciosos de ella, siempre me has hablado con ilusión y sobre todo con mucho amor. Por desgracia nunca pude conocerla, pero solo con las palabras que tú me decías sé que era una persona muy especial y con un corazón enorme. 
+Muchas veces le dedicas vídeos, fotos, textos… Es muy bonito poder ver la manera en la que la recuerdas y todo el cariño que nos haces ver a todos que le tienes.
+
+En su momento ya te conté que tengo seguro que tu mamá sigue estando contigo de alguna forma, muchas casualidades cuando te conocí y me hablaste de ella, y de ser así, estará súper contenta y orgullosa de la hija que tiene y cómo sigues adelante siempre por más cosas que pasen, porque sacaste a tu papá y tu hermanito de la tristeza cuando todo pasó, sacaste fuerzas cuando tú lo estabas sufriendo, pero lograste que ellos mejoraran antes de sobrellevarlo tú, eso habla mucho de ti.
+
+Y tienes que saber que por muy difíciles que sean estos días, y todos los 13 de noviembre que quedan por venir, tal vez quieras pasarlos sola, son días memorables, en los cuales lo pasarás mal, pero recuerda, que nunca vas a estar sola, tienes a mucha gente que te quiere, y estoy seguro de que opinarán igual que yo, y siempre que necesites un hombro donde llorar, pondrán el suyo como lo pondría yo.
+Eres fuerte Nayara, la chica más fuerte que he conocido nunca, no dejes de sonreír, que tienes la sonrisa más bonita del mundo.
+
+Nunca estarás sola, te quiero mucho.`,
+        sign: 'Moisés',
+        voiceIdx: 1
+      },
+      {
+        id: 'alvaro',
+        label: 'Álvaro',
+        position: [7.2, 0.6, 4.2],
+        color: 0xd9c2ff,
+        scale: 1.4,
+        isPrimary: false,
+        title: 'Álvaro',
+        photo: 'foto_alvaro.jpg',
+        body: `Para mi persona especial, un breve resumen de todo lo que eres para mí: 
+Eres luz, fuerza, paz, transmites calma, eres admirable, una persona que inspira, que demuestra que existen personas a las que puedes querer, y un millón de adjetivos similares los cuales podría hacer una lista interminable. 
+
+Voy a estar aquí a tu lado para recordarte todos, absolutamente todos los días, la persona que eres, porque si, el destino te puso en mi vida en algún momento por alguna razón, la cual me alegro muchísimo de ello y no pienso dejar que llegue un simple día en el que pueda ayudarte y no hacerlo. 
+
+Es un día triste, pero espero que esto te haga ver la parte positiva de todo esto (aunque sea mínima), mírate, con la cabeza bien alta a pesar de todo y logrando poco a poco tus metas, y con la seguridad de que así será hasta que consigas todo lo que quieres. Creo que el orgullo que siente tu madre por ti no cabe en este mundo, así que quiero que me prometas que no la decepcionarás, que vas a seguir siendo como eres, sin dejar que nada ni nadie te frene en tu vida, ya sea tú sola o apoyándote en el hombro que te ofrezco siempre. Porque como te he dicho ya: “Si te apetece estar sola, podemos estar solos juntos, si estás triste y no sabes qué hacer, podemos no saber qué hacer los dos juntos. Porque sé que tú puedes sola, pero no hace falta que lo hagas sola”.`,
+        sign: 'Tu gaditano, Álvaro',
+        voiceIdx: 2
+      }
+    ];
+
+    const VOICE_TRACKS = [
+      {
+        author: 'Daniel',
+        title: 'Daniel',
+        file: 'audio_daniel.m4a',
+        notes: [261.63, 329.63, 392.00, 523.25]
+      },
+      {
+        author: 'Moisés',
+        title: 'Moisés',
+        file: 'audio_moises.mp3',
+        notes: [220.00, 261.63, 329.63, 440.00]
+      },
+      {
+        author: 'Álvaro',
+        title: 'Álvaro',
+        file: 'audio_alvaro.mp3',
+        notes: [174.61, 220.00, 261.63, 349.23]
+      }
+    ];
+
+    // Tickets SIN nombres propios
+    const TICKETS_DATA = [
+      {
+        id: 'peli',
+        icon: '🎬',
+        title: 'Noche de película que tú quieras',
+        desc: 'Tú eliges la peli o serie que vemos juntos. Cero quejas por nuestra parte.'
+      },
+      {
+        id: 'juego',
+        icon: '🎮',
+        title: 'Noche de jugar a lo que tú quieras',
+        desc: 'Jugamos al juego que tú mandes toda la noche, aunque seamos malísimos.'
+      },
+      {
+        id: 'cancion',
+        icon: '🎤',
+        title: 'Te cantamos la canción que tú quieras',
+        desc: 'Concierto privado en llamada con el temazo que elijas.'
+      },
+      {
+        id: 'cena',
+        icon: '🍔',
+        title: 'Cena o merienda sorpresa a casa',
+        desc: 'Te pedimos a domicilio tu comida o postre favorito para comer juntos en llamada.'
+      },
+      {
+        id: 'manda',
+        icon: '👑',
+        title: 'Día de "Hoy manda Nayara"',
+        desc: 'Durante todo el día tú decides qué se hace en Discord y nadie te puede llevar la contraria.'
+      },
+      {
+        id: 'llamada',
+        icon: '📞',
+        title: 'Llamada comodín a cualquier hora',
+        desc: 'Para cuando necesites hablar, desahogarte o que digamos tonterías hasta que te rías.'
+      }
+    ];
+
+    // Mensaje del panda (Pablo) — EDITA AQUÍ EL TEXTO
+    const PANDA_DATA = {
+      title: '¡Hola Nay!',
+      body: `Que pasa quilla, sé que no tenemos mucha confianza aun y soy el más nuevo de aquí, pero desde que os conozco se nota que sois unos chavales increíble y tú en concreto eres una niña muy fuerte y muy buena, que sepas que me tienes para todo lo que haga falta porque eres una niña que se nota que tiene un corazón que no le cabe en el pecho, y todos tus seres queridos sea donde sea siempre van a estar muy orgullosos de la mujer que estás siendo🫶`,
+      sign: 'Panda 🐼'
+    };
+
+    // ============================================================================
+    // 2. AUDIO AMBIENTAL Y REPRODUCTOR DE VOZ
+    // ============================================================================
+    let audioCtx = null;
+    let ambientPlaying = false;
+    let ambientTimer = null;
+    const bgMusicEl = document.getElementById('bg-music-el');
+
+    function ensureAudioCtx() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playAmbientChord(freqs, duration = 4.6, volume = 0.032) {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      freqs.forEach((f, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(f, now);
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(volume / freqs.length, now + 1.1);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.15);
+      });
+    }
+
+    function playSparkleChime(baseFreq = 523.25) {
+      ensureAudioCtx();
+      const now = audioCtx.currentTime;
+      [baseFreq, baseFreq * 1.25, baseFreq * 1.5].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.09);
+        gain.gain.setValueAtTime(0.0001, now + i * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.038, now + i * 0.09 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.09 + 1.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + i * 0.09);
+        osc.stop(now + i * 0.09 + 1.5);
+      });
+    }
+
+    function startAmbientMusic() {
+      ensureAudioCtx();
+      ambientPlaying = true;
+      document.getElementById('ambient-dot').classList.add('playing');
+
+      bgMusicEl.volume = 0.35;
+      bgMusicEl.play().catch(() => {
+        const progression = [
+          [261.63, 329.63, 392.00, 493.88],
+          [220.00, 261.63, 329.63, 392.00],
+          [174.61, 220.00, 261.63, 349.23],
+          [196.00, 246.94, 293.66, 392.00]
+        ];
+        let step = 0;
+        playAmbientChord(progression[0]);
+        clearInterval(ambientTimer);
+        ambientTimer = setInterval(() => {
+          if (!ambientPlaying) return;
+          step = (step + 1) % progression.length;
+          playAmbientChord(progression[step]);
+        }, 4400);
+      });
+    }
+
+    function stopAmbientMusic() {
+      ambientPlaying = false;
+      clearInterval(ambientTimer);
+      bgMusicEl.pause();
+      document.getElementById('ambient-dot').classList.remove('playing');
+    }
+
+    // ============================================================================
+    // 3. ESCENA 3D CON THREE.JS Y ESTRELLAS FUGACES
+    // ============================================================================
+    const container = document.getElementById('canvas-container');
+    const labelsLayer = document.getElementById('labels-layer');
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x05070e, 0.014);
+
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 220);
+    camera.position.set(0, 1.5, 22);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.55;
+    controls.enablePan = false;
+    controls.minDistance = 8;
+    controls.maxDistance = 36;
+    controls.maxPolarAngle = Math.PI * 0.68;
+    controls.minPolarAngle = Math.PI * 0.22;
+
+    function createGlowTexture() {
+      const c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 128;
+      const ctx = c.getContext('2d');
+      const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      grad.addColorStop(0, 'rgba(255, 252, 240, 1)');
+      grad.addColorStop(0.22, 'rgba(255, 226, 168, 0.85)');
+      grad.addColorStop(0.55, 'rgba(232, 155, 76, 0.28)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+      return new THREE.CanvasTexture(c);
+    }
+
+    const glowTex = createGlowTexture();
+
+    const bgCount = 1900;
+    const bgGeo = new THREE.BufferGeometry();
+    const bgPos = new Float32Array(bgCount * 3);
+    for (let i = 0; i < bgCount; i++) {
+      const r = 32 + Math.random() * 68;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      bgPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      bgPos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      bgPos[i * 3 + 2] = r * Math.cos(phi);
+    }
+    bgGeo.setAttribute('position', new THREE.BufferAttribute(bgPos, 3));
+    const bgMat = new THREE.PointsMaterial({
+      size: 0.72,
+      map: glowTex,
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      color: 0xfff3d8
+    });
+    const bgStars = new THREE.Points(bgGeo, bgMat);
+    scene.add(bgStars);
+
+    const interactiveMeshes = [];
+    const starObjects = [];
+
+    STAR_DATA.forEach((data) => {
+      const group = new THREE.Group();
+      group.position.set(...data.position);
+
+      const coreGeo = new THREE.SphereGeometry(0.28 * data.scale, 24, 24);
+      const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+      coreMesh.userData = { starData: data };
+      group.add(coreMesh);
+
+      const hitGeo = new THREE.SphereGeometry(1.15 * data.scale, 12, 12);
+      const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+      const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+      hitMesh.userData = { starData: data };
+      group.add(hitMesh);
+      interactiveMeshes.push(hitMesh);
+
+      const haloMat = new THREE.SpriteMaterial({
+        map: glowTex,
+        color: data.color,
+        transparent: true,
+        opacity: 0.92,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const halo = new THREE.Sprite(haloMat);
+      halo.scale.set(2.9 * data.scale, 2.9 * data.scale, 1);
+      group.add(halo);
+
+      let outerRing = null;
+      if (data.isPrimary) {
+        const ringGeo = new THREE.RingGeometry(1.05, 1.12, 64);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xf5d799,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.36
+        });
+        outerRing = new THREE.Mesh(ringGeo, ringMat);
+        group.add(outerRing);
+      }
+
+      scene.add(group);
+
+      const lbl = document.createElement('div');
+      lbl.className = 'star-label' + (data.isPrimary ? ' primary-star' : '');
+      lbl.innerHTML = `<div class="lbl-name">${data.label}</div>`;
+      lbl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        focusAndOpenStar(data);
+      });
+      labelsLayer.appendChild(lbl);
+
+      starObjects.push({
+        data,
+        group,
+        halo,
+        outerRing,
+        labelEl: lbl,
+        baseScale: 2.9 * data.scale,
+        phase: Math.random() * Math.PI * 2
+      });
+    });
+
+    const linePoints = [];
+    const centerVec = new THREE.Vector3(...STAR_DATA[0].position);
+    for (let i = 1; i < STAR_DATA.length; i++) {
+      linePoints.push(centerVec.clone());
+      linePoints.push(new THREE.Vector3(...STAR_DATA[i].position));
+    }
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+    const lineMat = new THREE.LineBasicMaterial({
+      color: 0xf5d799,
+      transparent: true,
+      opacity: 0.16
+    });
+    scene.add(new THREE.LineSegments(lineGeo, lineMat));
+
+    const lanterns = [];
+    function spawnAmbientLantern() {
+      const lGroup = new THREE.Group();
+      const startX = (Math.random() - 0.5) * 24;
+      const startY = -9 + Math.random() * 16;
+      const startZ = (Math.random() - 0.5) * 16;
+
+      lGroup.position.set(startX, startY, startZ);
+
+      const scale = 0.9 + Math.random() * 0.55;
+      const spriteMat = new THREE.SpriteMaterial({
+        map: glowTex,
+        color: 0xf2a855,
+        transparent: true,
+        opacity: 0.65,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(scale, scale, 1);
+      lGroup.add(sprite);
+
+      scene.add(lGroup);
+      lanterns.push({
+        group: lGroup,
+        speedY: 0.006 + Math.random() * 0.006,
+        swaySpeed: 0.7 + Math.random() * 0.9,
+        swayOffset: Math.random() * Math.PI * 2
+      });
+    }
+
+    for (let i = 0; i < 16; i++) {
+      spawnAmbientLantern();
+    }
+
+    const shootingStars = [];
+    const shootingHitMeshes = [];
+
+    function spawnShootingStar(isWishBurst = false) {
+      const group = new THREE.Group();
+      const fromLeft = Math.random() > 0.5;
+      const startX = (fromLeft ? -1 : 1) * (14 + Math.random() * 10);
+      const startY = 6 + Math.random() * 9;
+      const startZ = -6 + Math.random() * 10;
+
+      const velX = (fromLeft ? 1 : -1) * (0.22 + Math.random() * 0.14);
+      const velY = -(0.09 + Math.random() * 0.08);
+      const velZ = (Math.random() - 0.5) * 0.06;
+      const velocity = new THREE.Vector3(velX, velY, velZ);
+
+      group.position.set(startX, startY, startZ);
+
+      const headMat = new THREE.SpriteMaterial({
+        map: glowTex,
+        color: isWishBurst ? 0xffe8a3 : 0xffffff,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const headSprite = new THREE.Sprite(headMat);
+      headSprite.scale.set(isWishBurst ? 2.2 : 1.7, isWishBurst ? 2.2 : 1.7, 1);
+      group.add(headSprite);
+
+      const hitGeo = new THREE.SphereGeometry(2.3, 8, 8);
+      const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+      const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+      hitMesh.userData = { isShootingStar: true };
+      group.add(hitMesh);
+      shootingHitMeshes.push(hitMesh);
+
+      const tailLength = isWishBurst ? 4.8 : 3.6;
+      const tailVec = velocity.clone().normalize().multiplyScalar(-tailLength);
+      const tailGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        tailVec
+      ]);
+      const tailMat = new THREE.LineBasicMaterial({
+        color: 0xf5d799,
+        transparent: true,
+        opacity: 0.78
+      });
+      const tailLine = new THREE.Line(tailGeo, tailMat);
+      group.add(tailLine);
+
+      scene.add(group);
+      shootingStars.push({
+        group,
+        hitMesh,
+        headMat,
+        tailMat,
+        velocity,
+        life: 1.0,
+        decay: isWishBurst ? 0.008 : 0.0095
+      });
+    }
+
+    function triggerShootingStarShower(count = 7) {
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          spawnShootingStar(true);
+        }, i * 220);
+      }
+    }
+
+    setInterval(() => {
+      if (shootingStars.length < 3) {
+        spawnShootingStar(false);
+      }
+    }, 4200);
+
+    let camTargetPos = null;
+    let camTargetLook = new THREE.Vector3(0, 1, 0);
+
+    function moveCameraTo(posArray, dist = 10.5) {
+      const target = new THREE.Vector3(...posArray);
+      const dir = camera.position.clone().sub(controls.target).normalize();
+      camTargetPos = target.clone().add(dir.multiplyScalar(dist));
+      camTargetLook = target.clone();
+    }
+
+    function resetCameraView() {
+      camTargetPos = new THREE.Vector3(0, 1.5, 22);
+      camTargetLook = new THREE.Vector3(0, 1, 0);
+      document.querySelectorAll('.nav-pill').forEach(b => b.classList.remove('active'));
+    }
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let pointerDownPos = { x: 0, y: 0 };
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+      camTargetPos = null;
+    });
+
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      const dx = e.clientX - pointerDownPos.x;
+      const dy = e.clientY - pointerDownPos.y;
+      if (Math.hypot(dx, dy) > 7) return;
+
+      pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+
+      const hitShooting = raycaster.intersectObjects(shootingHitMeshes);
+      if (hitShooting.length > 0) {
+        playSparkleChime(659.25);
+        openTicketsModal();
+        return;
+      }
+
+      const hits = raycaster.intersectObjects(interactiveMeshes);
+      if (hits.length > 0) {
+        const starData = hits[0].object.userData.starData;
+        focusAndOpenStar(starData);
+      }
+    });
+
+    // ============================================================================
+    // 4. INTERFAZ, FOTOS, TICKETS Y REPRODUCTOR DE AUDIOS
+    // ============================================================================
+    const letterModal = document.getElementById('letter-modal');
+    const voiceModal = document.getElementById('voice-modal');
+    const ticketsModal = document.getElementById('tickets-modal');
+    const photoWrapEl = document.getElementById('modal-photo-wrap');
+    const photoImgEl = document.getElementById('modal-photo');
+
+    photoImgEl.addEventListener('load', () => {
+      photoWrapEl.style.display = 'block';
+    });
+
+    photoImgEl.addEventListener('error', () => {
+      photoWrapEl.style.display = 'none';
+    });
+
+    // Seguimiento de estrellas leídas (para que aparezca el panda)
+    const seenStars = new Set();
+
+    function focusAndOpenStar(starData) {
+      seenStars.add(starData.id);
+      playSparkleChime(starData.isPrimary ? 587.33 : 493.88);
+      moveCameraTo(starData.position, starData.isPrimary ? 9.5 : 10.5);
+
+      document.querySelectorAll('.nav-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.star === starData.id);
+      });
+
+      document.getElementById('modal-title').textContent = starData.title;
+      document.getElementById('modal-body').textContent = starData.body;
+      document.getElementById('modal-sign').textContent = starData.sign;
+
+      if (starData.photo) {
+        photoWrapEl.style.display = 'none';
+        photoImgEl.src = starData.photo;
+        photoImgEl.alt = starData.title;
+      } else {
+        photoWrapEl.style.display = 'none';
+        photoImgEl.removeAttribute('src');
+      }
+
+      const shortcutWrap = document.getElementById('modal-voice-shortcut');
+      const listenBtn = document.getElementById('modal-listen-btn');
+      const listenLabel = document.getElementById('modal-listen-label');
+
+      if (starData.voiceIdx !== null && starData.voiceIdx !== undefined) {
+        shortcutWrap.style.display = 'flex';
+        listenLabel.textContent = `Audio de ${VOICE_TRACKS[starData.voiceIdx].author}`;
+        listenBtn.onclick = () => {
+          letterModal.classList.remove('open');
+          openVoiceCapsule(starData.voiceIdx, true);
+        };
+      } else if (starData.isPrimary) {
+        shortcutWrap.style.display = 'flex';
+        listenLabel.textContent = 'Escuchar audios';
+        listenBtn.onclick = () => {
+          letterModal.classList.remove('open');
+          openVoiceCapsule(0, false);
+        };
+      } else {
+        shortcutWrap.style.display = 'none';
+      }
+
+      letterModal.classList.add('open');
+    }
+
+    const usedTickets = new Set();
+    const ticketsListEl = document.getElementById('tickets-list');
+    const wishToastEl = document.getElementById('wish-toast');
+    let toastTimer = null;
+
+    function showWishToast(text) {
+      wishToastEl.textContent = text;
+      wishToastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        wishToastEl.classList.remove('show');
+      }, 3600);
+    }
+
+    function renderTickets() {
+      ticketsListEl.innerHTML = TICKETS_DATA.map((t) => {
+        const isUsed = usedTickets.has(t.id);
+        return `
+          <div class="ticket-item ${isUsed ? 'used' : ''}" data-ticket-id="${t.id}">
+            <div class="ticket-left">
+              <div class="ticket-icon">${t.icon}</div>
+              <div class="ticket-info">
+                <div class="ticket-title">${t.title}</div>
+                <div class="ticket-desc">${t.desc}</div>
+              </div>
+            </div>
+            <div class="ticket-right">
+              <button class="ticket-btn" data-use-ticket="${t.id}">
+                ${isUsed ? '✦ Pedido (Repetir)' : 'Pedir deseo ✦'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      ticketsListEl.querySelectorAll('[data-use-ticket]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-use-ticket');
+          const ticket = TICKETS_DATA.find(item => item.id === id);
+          usedTickets.add(id);
+          renderTickets();
+
+          ticketsModal.classList.remove('open');
+          resetCameraView();
+          playSparkleChime(659.25);
+          triggerShootingStarShower(8);
+
+          if (ticket) {
+            showWishToast(`🌠 Vale activado: ${ticket.title}`);
+          }
+        });
+      });
+    }
+
+    function openTicketsModal() {
+      renderTickets();
+      ticketsModal.classList.add('open');
+    }
+
+    // Cápsula de Voz
+    let activeTrackIdx = 0;
+    let isVoicePlaying = false;
+    let synthFallbackInterval = null;
+    let synthElapsed = 0;
+    const SYNTH_DURATION = 26;
+    const voiceAudioEl = document.getElementById('voice-audio-el');
+    const voicePlayBtn = document.getElementById('voice-play-btn');
+    const progressFill = document.getElementById('progress-bar-fill');
+    const timeCurrEl = document.getElementById('time-current');
+    const timeTotalEl = document.getElementById('time-total');
+    const waveCanvas = document.getElementById('waveform-canvas');
+    const waveCtx = waveCanvas.getContext('2d');
+
+    function formatSec(s) {
+      if (!isFinite(s) || s < 0) return '0:00';
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+    }
+
+    function drawWaveform() {
+      const w = waveCanvas.width;
+      const h = waveCanvas.height;
+      waveCtx.clearRect(0, 0, w, h);
+
+      const bars = 42;
+      const gap = 4;
+      const barW = (w - (bars - 1) * gap) / bars;
+      const t = performance.now() * 0.005;
+
+      for (let i = 0; i < bars; i++) {
+        let amp = 0.16;
+        if (isVoicePlaying) {
+          amp = 0.2 + 0.68 * Math.abs(Math.sin(t + i * 0.35) * Math.cos(t * 0.7 - i * 0.2));
+        }
+        const barH = Math.max(4, amp * (h - 10));
+        const x = i * (barW + gap);
+        const y = (h - barH) / 2;
+
+        waveCtx.fillStyle = isVoicePlaying ? 'rgba(245, 215, 153, 0.85)' : 'rgba(245, 215, 153, 0.25)';
+        waveCtx.beginPath();
+        waveCtx.roundRect(x, y, barW, barH, 3);
+        waveCtx.fill();
+      }
+      requestAnimationFrame(drawWaveform);
+    }
+    drawWaveform();
+
+    function selectVoiceTrack(idx, autoPlay = false) {
+      stopVoicePlayback();
+      activeTrackIdx = idx;
+      const track = VOICE_TRACKS[idx];
+
+      document.querySelectorAll('.voice-tab').forEach((tab, i) => {
+        tab.classList.toggle('active', i === idx);
+      });
+
+      document.getElementById('track-title').textContent = track.title;
+      progressFill.style.width = '0%';
+      timeCurrEl.textContent = '0:00';
+      timeTotalEl.textContent = '0:00';
+
+      voiceAudioEl.src = track.file;
+      if (autoPlay) {
+        startVoicePlayback();
+      }
+    }
+
+    function startVoicePlayback() {
+      ensureAudioCtx();
+      const track = VOICE_TRACKS[activeTrackIdx];
+      isVoicePlaying = true;
+      voicePlayBtn.textContent = '❚❚';
+
+      voiceAudioEl.play().then(() => {
+        // Reproduciendo archivo de audio real
+      }).catch(() => {
+        timeTotalEl.textContent = formatSec(SYNTH_DURATION);
+        synthElapsed = 0;
+        playAmbientChord(track.notes, 3.4, 0.05);
+
+        clearInterval(synthFallbackInterval);
+        synthFallbackInterval = setInterval(() => {
+          synthElapsed += 0.25;
+          if (Math.floor(synthElapsed * 4) % 14 === 0) {
+            playAmbientChord(track.notes, 3.2, 0.045);
+          }
+          const pct = Math.min(100, (synthElapsed / SYNTH_DURATION) * 100);
+          progressFill.style.width = pct + '%';
+          timeCurrEl.textContent = formatSec(synthElapsed);
+
+          if (synthElapsed >= SYNTH_DURATION) {
+            stopVoicePlayback();
+          }
+        }, 250);
+      });
+    }
+
+    function stopVoicePlayback() {
+      isVoicePlaying = false;
+      voicePlayBtn.textContent = '▶';
+      voiceAudioEl.pause();
+      clearInterval(synthFallbackInterval);
+    }
+
+    voiceAudioEl.addEventListener('timeupdate', () => {
+      if (voiceAudioEl.duration) {
+        const pct = (voiceAudioEl.currentTime / voiceAudioEl.duration) * 100;
+        progressFill.style.width = pct + '%';
+        timeCurrEl.textContent = formatSec(voiceAudioEl.currentTime);
+        timeTotalEl.textContent = formatSec(voiceAudioEl.duration);
+      }
+    });
+
+    voiceAudioEl.addEventListener('ended', () => {
+      stopVoicePlayback();
+    });
+
+    document.getElementById('progress-bar-bg').addEventListener('click', (e) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      if (voiceAudioEl.duration) {
+        voiceAudioEl.currentTime = ratio * voiceAudioEl.duration;
+      } else if (isVoicePlaying) {
+        synthElapsed = ratio * SYNTH_DURATION;
+      }
+    });
+
+    voicePlayBtn.addEventListener('click', () => {
+      if (isVoicePlaying) {
+        stopVoicePlayback();
+      } else {
+        startVoicePlayback();
+      }
+    });
+
+    document.querySelectorAll('.voice-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        selectVoiceTrack(Number(tab.dataset.track), false);
+      });
+    });
+
+    function openVoiceCapsule(trackIdx = 0, autoPlay = false) {
+      selectVoiceTrack(trackIdx, autoPlay);
+      voiceModal.classList.add('open');
+    }
+
+    document.getElementById('enter-btn').addEventListener('click', () => {
+      document.getElementById('intro-screen').classList.add('hidden');
+      document.getElementById('hud-top').classList.add('visible');
+      document.getElementById('bottom-dock').classList.add('visible');
+      startAmbientMusic();
+      playSparkleChime(523.25);
+      setTimeout(() => spawnShootingStar(false), 1200);
+    });
+
+    document.getElementById('ambient-btn').addEventListener('click', () => {
+      if (ambientPlaying) {
+        stopAmbientMusic();
+      } else {
+        startAmbientMusic();
+      }
+    });
+
+    document.getElementById('reset-cam-btn').addEventListener('click', resetCameraView);
+
+    document.querySelectorAll('.nav-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const star = STAR_DATA.find(s => s.id === btn.dataset.star);
+        if (star) focusAndOpenStar(star);
+      });
+    });
+
+    document.getElementById('open-voice-btn').addEventListener('click', () => {
+      openVoiceCapsule(0, false);
+    });
+
+    document.getElementById('open-tickets-btn').addEventListener('click', () => {
+      playSparkleChime(587.33);
+      openTicketsModal();
+    });
+
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-close');
+        document.getElementById(targetId).classList.remove('open');
+        if (targetId === 'voice-modal') stopVoicePlayback();
+      });
+    });
+
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+          backdrop.classList.remove('open');
+          if (backdrop.id === 'voice-modal') stopVoicePlayback();
+        }
+      });
+    });
+
+    // ---- Panda (Pablo) ----
+    const PANDA_REQUIRED = ['daniel', 'moises', 'alvaro'];
+    const pandaBtn = document.getElementById('panda-btn');
+    const pandaModal = document.getElementById('panda-modal');
+    let pandaShown = false;
+
+    function checkPanda() {
+      if (pandaShown) return;
+      if (PANDA_REQUIRED.every(id => seenStars.has(id))) {
+        pandaShown = true;
+        setTimeout(() => {
+          pandaBtn.classList.add('show');
+          playSparkleChime(783.99);
+        }, 900);
+      }
+    }
+
+    // Cuando se cierra una carta, comprobamos si ya ha leído las 3 estrellas
+    new MutationObserver(() => {
+      if (!letterModal.classList.contains('open')) checkPanda();
+    }).observe(letterModal, { attributes: true, attributeFilter: ['class'] });
+
+    pandaBtn.addEventListener('click', () => {
+      document.getElementById('panda-title').textContent = PANDA_DATA.title;
+      document.getElementById('panda-body').textContent = PANDA_DATA.body;
+      document.getElementById('panda-sign').textContent = PANDA_DATA.sign;
+      playSparkleChime(698.46);
+      pandaModal.classList.add('open');
+    });
+
+    // ============================================================================
+    // 5. BUCLE DE ANIMACIÓN
+    // ============================================================================
+    const clock = new THREE.Clock();
+    const tempVec = new THREE.Vector3();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+
+      bgStars.rotation.y = elapsed * 0.012;
+
+      if (camTargetPos) {
+        camera.position.lerp(camTargetPos, 0.045);
+        controls.target.lerp(camTargetLook, 0.055);
+        if (camera.position.distanceTo(camTargetPos) < 0.15) {
+          camTargetPos = null;
+        }
+      }
+
+      controls.update();
+
+      starObjects.forEach((obj) => {
+        const pulse = 1 + Math.sin(elapsed * 2.2 + obj.phase) * 0.12;
+        obj.halo.scale.set(obj.baseScale * pulse, obj.baseScale * pulse, 1);
+
+        if (obj.outerRing) {
+          obj.outerRing.lookAt(camera.position);
+          const ringScale = 1 + Math.sin(elapsed * 1.5) * 0.08;
+          obj.outerRing.scale.set(ringScale, ringScale, 1);
+        }
+
+        tempVec.copy(obj.group.position);
+        tempVec.y -= 0.72 * obj.data.scale;
+        tempVec.project(camera);
+
+        if (tempVec.z < 1) {
+          const x = (tempVec.x * 0.5 + 0.5) * window.innerWidth;
+          const y = (-(tempVec.y * 0.5) + 0.5) * window.innerHeight;
+          obj.labelEl.style.left = `${x}px`;
+          obj.labelEl.style.top = `${y}px`;
+          obj.labelEl.style.opacity = '1';
+        } else {
+          obj.labelEl.style.opacity = '0';
+        }
+      });
+
+      lanterns.forEach((l) => {
+        l.group.position.y += l.speedY;
+        l.group.position.x += Math.sin(elapsed * l.swaySpeed + l.swayOffset) * 0.008;
+        if (l.group.position.y > 14) {
+          l.group.position.y = -10;
+        }
+      });
+
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        const st = shootingStars[i];
+        st.group.position.add(st.velocity);
+        st.life -= st.decay;
+        st.headMat.opacity = Math.max(0, st.life);
+        st.tailMat.opacity = Math.max(0, st.life * 0.78);
+
+        if (st.life <= 0) {
+          scene.remove(st.group);
+          const hitIdx = shootingHitMeshes.indexOf(st.hitMesh);
+          if (hitIdx !== -1) shootingHitMeshes.splice(hitIdx, 1);
+          shootingStars.splice(i, 1);
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
